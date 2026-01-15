@@ -1,0 +1,50 @@
+services:
+  app:
+    image: node:22-alpine
+    container_name: node-app
+    working_dir: /app
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./${Project_Folder}:/app
+
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PACKAGE_MANAGER: ${PACKAGE_MANAGER:-auto} # auto | npm | pnpm
+      PNPM_STORE_DIR: /root/.pnpm-store
+
+    command: >
+      sh -c '
+        corepack enable &&
+        if [ "$PACKAGE_MANAGER" = "pnpm" ]; then
+          echo "→ Using pnpm (forced)";
+          pnpm install;
+          pnpm run build || true;
+          pnpm run start;
+        elif [ "$PACKAGE_MANAGER" = "npm" ]; then
+          echo "→ Using npm (forced)";
+          npm ci;
+          npm run build || true;
+          npm run start;
+        else
+          # auto: fallback to pnpm if pnpm-lock.yaml exists, otherwise npm
+          if [ -f pnpm-lock.yaml ]; then
+            echo "→ Using pnpm (auto via lockfile)";
+            pnpm install;
+            pnpm run build || true;
+            pnpm run start;
+          else
+            echo "→ Using npm (auto)";
+            npm ci;
+            npm run build || true;
+            npm run start;
+          fi
+        fi
+      '
+
+    ports:
+      - "${APP_Port:-3000}:3000"
+
+    restart: unless-stopped

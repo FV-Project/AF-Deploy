@@ -1,0 +1,8 @@
+# Ignore pnpm store if accidentally created inside the repo
+.pnpm-store/
+.pnpm-store
+
+# Common ignores
+node_modules/
+.DS_Store
+webapp/
